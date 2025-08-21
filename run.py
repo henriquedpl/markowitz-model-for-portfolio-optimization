@@ -210,7 +210,7 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
         "fun": lambda x: epslon
         - constraint_function_risk(
             x, [returns, cov_matrix], threshold=MAX_ACCEPTED_RISK
-        ),
+        ),  # same as | vol(w) - threshold | < epslon
     }
     bounds = tuple((0, 1) for _ in range(len(TICKERS)))
     if to_optimize == "sharpe":
@@ -236,13 +236,14 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
 
 
 # main loop
-price_history = read_data()
-returns = calculate_returns(price_history)
-average_returns, cov_matrix = calculate_statistics(returns)
+if __name__ == "__main__":
 
-weights, means, risks = generate_portfolios(returns, cov_matrix)
-optimal = optimize_portfolio(
-    weights[0], returns, cov_matrix, to_optimize="expected_return"
-)
-# print(optimal)
-show_portfolios(means, risks, returns, cov_matrix, optimal)
+    price_history = read_data()
+    returns = calculate_returns(price_history)
+    average_returns, cov_matrix = calculate_statistics(returns)
+
+    weights, means, risks = generate_portfolios(returns, cov_matrix)
+    optimal = optimize_portfolio(
+        weights[0], returns, cov_matrix, to_optimize="expected_return"
+    )
+    show_portfolios(means, risks, returns, cov_matrix, optimal)
