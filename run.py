@@ -10,6 +10,7 @@ from prepare_data import TICKERS
 
 WINDOW_SIZE = 252
 NUM_PORTFOLIOS = 50000
+MAX_ACCEPTED_RISK = 0.29
 
 
 def read_data(filename="price_history.csv"):
@@ -165,6 +166,26 @@ def max_function_sharpe(w0, args):
     return -sharpe_ratio
 
 
+def max_function_return(w0, args):
+    "Maximization function that will be used when portfolio is being optimized for expected return"
+    returns, cov_matrix = args
+    expected_return, _, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
+    return -expected_return
+
+
+def constraint_function_risk(w0, args, threshold):
+    """
+    Constraint function that adds a limit to the risk. Used when portfolio is being
+    optimized for expected return.
+    Constraint returns the difference between the weights risk r and the threshold t
+    Returns:
+        | r - t |
+    """
+    returns, cov_matrix = args
+    _, risk, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
+    return abs(threshold - risk)
+
+
 def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
     """
     Find the optimal portfolio, i.e. the one with highest sharpe ratio.
@@ -178,9 +199,19 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
     Returns:
         a set of weights w for the optimal portfolio
     """
+    # epslon used in risk constraint. If risk is between an epslon-neighborhood
+    # of MAX_ACCEPTED_RISK, then the constraint holds, failing otherwise
+    epslon = 0.01
+
     # make sure the sum of the weights is 1
     w_sum_constraint = {"type": "eq", "fun": lambda x: np.sum(x) - 1}
-    # risk_constraint = {"type", "ineq", "fun": lambda x: w_expected_return_and_risk}
+    risk_constraint = {
+        "type": "ineq",
+        "fun": lambda x: epslon
+        - constraint_function_risk(
+            x, [returns, cov_matrix], threshold=MAX_ACCEPTED_RISK
+        ),
+    }
     bounds = tuple((0, 1) for _ in range(len(TICKERS)))
     if to_optimize == "sharpe":
         return optimize.minimize(
@@ -192,7 +223,14 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
             constraints=w_sum_constraint,
         )["x"]
     elif to_optimize == "expected_return":
-        pass
+        return optimize.minimize(
+            fun=max_function_return,
+            x0=w0,
+            args=[returns, cov_matrix],
+            method="SLSQP",
+            bounds=bounds,
+            constraints=[w_sum_constraint, risk_constraint],
+        )["x"]
     elif to_optimize == "risk":
         pass
 
@@ -202,7 +240,9 @@ price_history = read_data()
 returns = calculate_returns(price_history)
 average_returns, cov_matrix = calculate_statistics(returns)
 
-weights, means, risks = generate_portfolios(returns)
-optimal = optimize_portfolio(weights[0], returns, cov_matrix)
+weights, means, risks = generate_portfolios(returns, cov_matrix)
+optimal = optimize_portfolio(
+    weights[0], returns, cov_matrix, to_optimize="expected_return"
+)
 # print(optimal)
 show_portfolios(means, risks, returns, cov_matrix, optimal)
