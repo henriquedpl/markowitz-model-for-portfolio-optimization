@@ -56,16 +56,18 @@ def calculate_statistics(returns_data):
     """
     Based on the returns calculated in the function above, calculates the
     average returns (simple mean across all returns, grouped by ticker) and a
-    covariance matrix. Since I picked stocks with little correlation (e.g. from
-    different segments the covariance between them will be pretty low -- |cov(x,y)| < 0.2)
+    covariance matrix looking back over the predefined window.
+    Since I picked stocks with little correlation (e.g. from different segments)
+    the covariance between them will be pretty low -- |cov(x,y)| < 0.2 for all x,y
 
     Params:
         returns_data: a dataframe with daily returns
     Returns:
-        an array with average daily returns and a covariance matrix
+        an array with average daily returns and a covariance matrix, calculated
+        over a window of length WINDOW_SIZE
     """
-    average_returns = returns.mean() * WINDOW_SIZE
-    cov_matrix = returns.cov() * WINDOW_SIZE
+    average_returns = returns[-WINDOW_SIZE:].mean() * WINDOW_SIZE
+    cov_matrix = returns[-WINDOW_SIZE:].cov() * WINDOW_SIZE
     return average_returns, cov_matrix
 
 
@@ -195,6 +197,13 @@ def constraint_function_risk(w0, args, threshold):
 
 
 def constraint_function_return(w0, args, threshold):
+    """
+    Constraint function that adds a limit to the expected return. Used when portfolio is being
+    optimized for risk.
+    Constraint returns the difference between the weights return r and the threshold t
+    Returns:
+        | r - t |
+    """
     returns, cov_matrix = args
     expected_return, _, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
     return abs(threshold - returns)
