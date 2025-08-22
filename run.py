@@ -11,6 +11,7 @@ from prepare_data import TICKERS
 WINDOW_SIZE = 252
 NUM_PORTFOLIOS = 50000
 MAX_ACCEPTED_RISK = 0.29
+MIN_ACCEPTED_RETURN = 0.145
 
 
 def read_data(filename="price_history.csv"):
@@ -173,6 +174,13 @@ def max_function_return(w0, args):
     return -expected_return
 
 
+def min_function_risk(w0, args):
+    "Minimization function that will be used when portfolio is being optimized for risk"
+    returns, cov_matrix = args
+    _, risk, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
+    return risk
+
+
 def constraint_function_risk(w0, args, threshold):
     """
     Constraint function that adds a limit to the risk. Used when portfolio is being
@@ -184,6 +192,12 @@ def constraint_function_risk(w0, args, threshold):
     returns, cov_matrix = args
     _, risk, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
     return abs(threshold - risk)
+
+
+def constraint_function_return(w0, args, threshold):
+    returns, cov_matrix = args
+    expected_return, _, _ = w_expected_return_and_risk(returns, cov_matrix, w0)
+    return abs(threshold - returns)
 
 
 def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
@@ -212,6 +226,13 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
             x, [returns, cov_matrix], threshold=MAX_ACCEPTED_RISK
         ),  # same as | vol(w) - threshold | < epslon
     }
+    expected_return_constraint = {
+        "type": "ineq",
+        "fun": lambda x: epslon
+        - constraint_function_return(
+            x, [returns, cov_matrix], threshold=MIN_ACCEPTED_RETURN
+        ),
+    }  # same as | expected_return(w) - threshold | < epslon
     bounds = tuple((0, 1) for _ in range(len(TICKERS)))
     if to_optimize == "sharpe":
         return optimize.minimize(
@@ -232,7 +253,14 @@ def optimize_portfolio(w0, returns, cov_matrix, to_optimize="sharpe"):
             constraints=[w_sum_constraint, risk_constraint],
         )["x"]
     elif to_optimize == "risk":
-        pass
+        return optimize.minimize(
+            fun=min_function_risk,
+            x0=w0,
+            args=[returns, cov_matrix],
+            method="SLSQP",
+            bounds=bounds,
+            constraints=[w_sum_constraint, expected_return_constraint],
+        )
 
 
 # main loop

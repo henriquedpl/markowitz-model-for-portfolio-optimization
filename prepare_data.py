@@ -21,10 +21,12 @@ def write_data():
     data.to_csv(PRICE_HISTORY_FILENAME)
 
     print("Downloading baseline data")
-    raw_bova11 = yf.download(BASELINE, interval="1d", period="max", progress=False)
-    data_bova11 = pd.DataFrame()
-    data_bova11["BOVA11.SA"] = raw_bova11["Close"]["BOVA11.SA"]
-    data_bova11.to_csv(BASELINE_FILENAME)
+    raw_backtest = yf.download(BASELINE, interval="1d", period="max", progress=False)
+    backtest_data = pd.DataFrame()
+    backtest_data["BOVA11.SA"] = raw_backtest["Close"]["BOVA11.SA"]
+    for ticker in TICKERS:
+        backtest_data[ticker] = raw_data["Open"][ticker]
+    backtest_data.to_csv(BASELINE_FILENAME)
 
 
 if __name__ == "__main__":
