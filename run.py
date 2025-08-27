@@ -10,7 +10,7 @@ from prepare_data import TICKERS
 
 WINDOW_SIZE = 252
 NUM_PORTFOLIOS = 50000
-MAX_ACCEPTED_RISK = 0.29
+MAX_ACCEPTED_RISK = 0.35
 MIN_ACCEPTED_RETURN = 0.145
 
 
@@ -52,7 +52,7 @@ def calculate_returns(price_history):
     return returns_data
 
 
-def calculate_statistics(returns_data):
+def calculate_statistics(returns_data, ws=WINDOW_SIZE):
     """
     Based on the returns calculated in the function above, calculates the
     average returns (simple mean across all returns, grouped by ticker) and a
@@ -66,12 +66,14 @@ def calculate_statistics(returns_data):
         an array with average daily returns and a covariance matrix, calculated
         over a window of length WINDOW_SIZE
     """
-    average_returns = returns[-WINDOW_SIZE:].mean() * WINDOW_SIZE
-    cov_matrix = returns[-WINDOW_SIZE:].cov() * WINDOW_SIZE
+    average_returns = returns_data[-ws:].mean() * ws
+    cov_matrix = returns_data[-ws:].cov() * ws
     return average_returns, cov_matrix
 
 
-def w_expected_return_and_risk(returns, cov_matrix, portfolio_weights, print_out=False):
+def w_expected_return_and_risk(
+    returns, cov_matrix, portfolio_weights, print_out=False, ws=WINDOW_SIZE
+):
     """
     Given a certain set of weights for each ticker representing a portfolio,
     calculate the expected return and the associated risk (volatility) of that
@@ -83,7 +85,7 @@ def w_expected_return_and_risk(returns, cov_matrix, portfolio_weights, print_out
             add up to 1)
     """
     # annual returns
-    portfolio_return = np.sum(returns.mean() * portfolio_weights) * WINDOW_SIZE
+    portfolio_return = np.sum(returns.mean() * portfolio_weights) * ws
     portfolio_volatility = np.sqrt(
         np.dot(portfolio_weights.T, np.dot(cov_matrix, portfolio_weights))
     )
