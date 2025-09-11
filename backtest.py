@@ -2,38 +2,38 @@ import pandas as pd
 import numpy as np
 from matplotlib import pyplot as plt
 
-from prepare_data import TICKERS
+from prepare_data import TICKERS, BASELINE
 from run import optimize_portfolio, calculate_returns, calculate_statistics
 
 
-# Read BOVA11.SA data (IBOV ETF) (IBOV = Bovespa index)
+# Read baseline data (IBRX ETF)
 baseline_data = pd.read_csv("baseline_data.csv", index_col=[0])
-bova11_returns = (baseline_data["BOVA11.SA"] / baseline_data["BOVA11.SA"].shift(1))[1:]
+baseline_returns = (baseline_data[BASELINE] / baseline_data[BASELINE].shift(1))[1:]
 
 # data with open prices for our tickers
 open_data = baseline_data[TICKERS]
 
 initial_notional = 100000
-bova11_returns_acc = [initial_notional]
+baseline_returns_acc = [initial_notional]
 
 notional = initial_notional
 
-for r in bova11_returns.values[1:]:
+for r in baseline_returns.values[1:]:
     notional *= r
-    bova11_returns_acc.append(notional)
+    baseline_returns_acc.append(notional)
 
-# create a dataframe with accumulated BOVA11 prices, as if initial_notional was
+# create a dataframe with accumulated baseline prices, as if initial_notional was
 # invested in the dataset's first day and held throughout the full timeframe
-bova11_df = pd.DataFrame(
-    index=bova11_returns.index, data=bova11_returns_acc, columns=["BOVA11"]
+baseline_df = pd.DataFrame(
+    index=baseline_returns.index, data=baseline_returns_acc, columns=["baseline"]
 )
 close_data = pd.read_csv("price_history.csv", index_col=[0])
 
 notional_daily_values = []
 day_i = 0
-# now, for each day in the BOVA11 history, we run our optimization,
+# now, for each day in the baseline history, we run our optimization,
 # updating the weights every 63 days
-for closing_date in bova11_df.index.values:
+for closing_date in baseline_df.index.values:
     window = close_data[TICKERS][close_data.index < closing_date]
 
     returns = calculate_returns(window)
@@ -65,6 +65,6 @@ for closing_date in bova11_df.index.values:
     # new notional is how much the portfolio is worth that day
     notional_daily_values.append(np.sum(total_shares_value))
 
-bova11_df["Markowitz Model"] = notional_daily_values
-bova11_df.plot(figsize=(20, 10))
+baseline_df["Markowitz Model"] = notional_daily_values
+baseline_df.plot(figsize=(20, 10))
 plt.show()
