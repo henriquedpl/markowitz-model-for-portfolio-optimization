@@ -282,7 +282,5 @@ if __name__ == "__main__":
     average_returns, cov_matrix = calculate_statistics(returns)
 
     weights, means, risks = generate_portfolios(returns, cov_matrix)
-    optimal = optimize_portfolio(
-        weights[0], returns, cov_matrix, to_optimize="expected_return"
-    )
+    optimal = optimize_portfolio(weights[0], returns, cov_matrix, to_optimize="sharpe")
     show_portfolios(means, risks, returns, cov_matrix, optimal)
