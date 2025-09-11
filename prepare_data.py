@@ -1,7 +1,15 @@
 import yfinance as yf
 import pandas as pd
 
-TICKERS = ["PETR4.SA", "ITUB4.SA", "VALE3.SA", "SBSP3.SA", "ELET3.SA", "EMBR3.SA"]
+TICKERS = [
+    "PETR4.SA",
+    "ITUB4.SA",
+    "VALE3.SA",
+    "SBSP3.SA",
+    "ELET3.SA",
+    "EMBR3.SA",
+    "RADL3.SA",
+]
 
 BASELINE = "BRAX11.SA"
 PRICE_HISTORY_FILENAME = "price_history.csv"

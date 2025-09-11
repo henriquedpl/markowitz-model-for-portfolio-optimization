@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 from prepare_data import TICKERS, BASELINE
 from run import optimize_portfolio, calculate_returns, calculate_statistics
 
+SLIPPAGE_RATE = 0.003
 
 # Read baseline data (IBRX ETF)
 baseline_data = pd.read_csv("baseline_data.csv", index_col=[0])
@@ -52,9 +53,9 @@ for closing_date in baseline_df.index.values:
         # distribute the notional N according to optimal distribution found
         notional_distribution = optimal * notional
 
-        # buy shares at open price considering 0.5% of slippage
+        # buy shares at open price considering some slippage
         total_shares_bought = notional_distribution / (
-            open_data[TICKERS].loc[closing_date] * 1.005
+            open_data[TICKERS].loc[closing_date] * (1 + SLIPPAGE_RATE)
         )
         day_i = 0
     day_i += 1
