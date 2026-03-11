@@ -6,9 +6,6 @@ TICKERS = [
     "ITUB4.SA",
     "VALE3.SA",
     "SBSP3.SA",
-    "ELET3.SA",
-    "EMBR3.SA",
-    "RADL3.SA",
 ]
 
 BASELINE = "BRAX11.SA"
