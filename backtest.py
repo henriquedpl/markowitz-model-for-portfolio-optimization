@@ -59,7 +59,6 @@ for closing_date in baseline_df.index.values:
         )
         day_i = 0
     day_i += 1
-
     # calculate the price of shares by the end of the day
     total_shares_value = total_shares_bought * close_data[TICKERS].loc[closing_date]
 

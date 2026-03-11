@@ -6,6 +6,10 @@ TICKERS = [
     "ITUB4.SA",
     "VALE3.SA",
     "SBSP3.SA",
+    "GGBR4.SA",
+    "B3SA3.SA",
+    "RADL3.SA",
+    "EMBJ"
 ]
 
 BASELINE = "BRAX11.SA"
@@ -17,7 +21,7 @@ def write_data():
     print("Downloading data for all tickers")
     raw_data = yf.download(
         " ".join(TICKERS), interval="1d", period="max", progress=False
-    ).dropna()
+    ).interpolate(axis=1)
 
     print("Saving downloaded data to csv")
     data = pd.DataFrame()
